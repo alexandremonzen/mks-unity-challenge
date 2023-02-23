@@ -2,45 +2,56 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ShooterAI : MonoBehaviour
+namespace MKS.Challenge
 {
-    [SerializeField] private GameObject _cannonBall;
-    [SerializeField] private float _timeToShoot;
-    [SerializeField] private float _distanceToShoot;
-    [SerializeField] private Transform _offsetSingleShoot;
-
-    private float _timer;
-    IMovementAI _movementAI;
-
-    private void Awake()
+    public class ShooterAI : MonoBehaviour
     {
-        _movementAI = GetComponent<IMovementAI>();
+        [SerializeField] private float _shootIntervalTime = 1;
+        [SerializeField] private float _distanceToShoot = 3;
+        [SerializeField] private GameObject _cannonBall;
+        [SerializeField] private Transform _offsetSingleShoot;
 
-        _timer = 0;
-    }
+        private float _timer;
+        private IMovementAI _movementAI;
+        private IDamageable _damageable;
+        private GameObjectsPooling _objectPooler;
 
-    private void Update()
-    {
-        _timer += 1 * Time.deltaTime;
-
-        if (_movementAI.GetDistanceFromTarget() <= _distanceToShoot)
+        private void Awake()
         {
-            ShootAtTarget();
-        }
-    }
+            _movementAI = GetComponent<IMovementAI>();
+            _damageable = GetComponent<IDamageable>();
+            _objectPooler = FindObjectOfType<GameObjectsPooling>();
 
-    private void ShootAtTarget()
-    {
-        if (_timer >= _timeToShoot)
-        {
             _timer = 0;
+        }
 
-            Instantiate(_cannonBall, _offsetSingleShoot.position, _offsetSingleShoot.rotation, null);
-            //cannonBall.transform.position = _offsetSingleShoot.position;
-            //cannonBall.transform.rotation = _offsetSingleShoot.rotation;
-            //cannonBall.SetActive(true);
+        private void Update()
+        {
+            _timer += 1 * Time.deltaTime;
 
-            //audio
+            if (_movementAI.GetDistanceFromTarget() <= _distanceToShoot)
+            {
+                ShootAtTarget();
+            }
+        }
+
+        private void ShootAtTarget()
+        {
+            if (_timer >= _shootIntervalTime)
+            {
+                _timer = 0;
+
+                CannonBall cannonBall = _objectPooler.GetPooledCannonBall();
+                cannonBall.transform.position = _offsetSingleShoot.position;
+                cannonBall.transform.rotation = _offsetSingleShoot.rotation;
+                cannonBall.IDamage.SetTeamSide(_damageable.GetTeamSide());
+                cannonBall.ResetRigidbodyVelocity();
+
+                cannonBall.gameObject.SetActive(true);
+                cannonBall.ShootCannonBall(Vector2.up);
+
+                //audio
+            }
         }
     }
 }
