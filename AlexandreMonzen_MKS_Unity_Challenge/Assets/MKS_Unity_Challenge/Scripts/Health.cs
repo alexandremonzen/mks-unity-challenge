@@ -6,6 +6,7 @@ namespace MKS.Challenge
     public sealed class Health : MonoBehaviour, IDamageable
     {
         [SerializeField] private int _maxHealth = 100;
+        [SerializeField] private Team _team = Team.Default;
         private int _actualHealth;
 
         public event Action OnDied;
@@ -16,14 +17,17 @@ namespace MKS.Challenge
             SetDefaultHealth();
         }
 
-        public void TakeDamage(int damageValue)
+        public void TakeDamage(int damageValue, Team teamSide)
         {
-            _actualHealth -= damageValue;
-            OnTookDamage?.Invoke(_actualHealth);
-
-            if (_actualHealth <= 0)
+            if (_team != teamSide)
             {
-                Die();
+                _actualHealth -= damageValue;
+                OnTookDamage?.Invoke(_actualHealth);
+
+                if (_actualHealth <= 0)
+                {
+                    Die();
+                }
             }
         }
 
@@ -40,6 +44,11 @@ namespace MKS.Challenge
         private void SetDefaultHealth()
         {
             _actualHealth = _maxHealth;
+        }
+
+        public Team GetTeamSide()
+        {
+            return _team;
         }
     }
 }
